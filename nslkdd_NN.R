@@ -1,8 +1,6 @@
 # start run timer
 start <- Sys.time()
 
-#set working directory
-#setwd("C:/Users/Owner/Documents/MIS545/FinalProject")
 
 #libraries
 #install.packages('ISLR')
