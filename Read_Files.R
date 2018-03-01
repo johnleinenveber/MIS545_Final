@@ -1,5 +1,4 @@
-# rbind csv files
-setwd("/Users/JohnLeinenveber/Documents/MIS545/FinalProject")
+
 
 start_time <- Sys.time()
 NAstrings = c("NaN", "Infinity")
