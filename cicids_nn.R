@@ -1,6 +1,9 @@
 # start run timer
 start <- Sys.time()
 
+#set working directory
+setwd("C:/Users/Owner/Documents/MIS545/FinalProject")
+
 #libraries
 #install.packages('ISLR')
 #install.packages('caTools')
@@ -10,24 +13,44 @@ library(caTools)
 library(neuralnet)
 
 #read in data
-NAstrings = c("NaN", "Infinity")
-#file1 <- read.csv("1Monday.csv", na.strings = NAstrings)
-#file2 <- read.csv("2Tuesday.csv", na.strings = NAstrings)
-#file3 <- read.csv("3Wednesday.csv", na.strings = NAstrings)
-#file4 <- read.csv("4ThursdayA-WebAttacks.csv", na.strings = NAstrings)
-#file5 <- read.csv("5ThursdayB-Infilteration.csv", na.strings = NAstrings)
-#file6 <- read.csv("6FridayA.csv", na.strings = NAstrings)
-#file7 <- read.csv("7FridayB-PortScan.csv", na.strings = NAstrings)
-data <- read.csv("CICIDS/8FridayC-DDoS1.csv", na.strings = NAstrings)
+NAstrings = c("NaN", "Infinity", "")
+file1 <- read.csv("CICIDS/1Monday.csv", na.strings = NAstrings)
+file2 <- read.csv("CICIDS/2Tuesday.csv", na.strings = NAstrings)
+file3 <- read.csv("CICIDS/3Wednesday.csv", na.strings = NAstrings)
+file4 <- read.csv("CICIDS/4ThursdayA-WebAttacks.csv", na.strings = NAstrings)
+file5 <- read.csv("CICIDS/5ThursdayB-Infilteration.csv", na.strings = NAstrings)
+file6 <- read.csv("CICIDS/6FridayA.csv", na.strings = NAstrings)
+file7 <- read.csv("CICIDS/7FridayB-PortScan.csv", na.strings = NAstrings)
+file8 <- read.csv("CICIDS/8FridayC-DDoS.csv", na.strings = NAstrings)
 
-#allData <- rbind(file1, file2, file3, file4, file5, file6, file7, file8)
+#the last csv file has one extra column that we need to remove before cbind()
+file8 <- subset(file8, select = -c(External.IP))
+
+data <- rbind(file1, file2, file3, file4, file5, file6, file7, file8)
 #rm(file1, file2, file3, file4, file5, file6, file7, file8)
 
-#change data types
-#data$Flow.ID <- as.numeric(data$Flow.ID)
-#data$Source.IP <- as.numeric(data$Source.IP)
-#data$Destination.IP <- as.numeric(data$Destination.IP)
+data$Flow.ID <- as.numeric(data$Flow.ID)
+data$Source.IP <- as.numeric(data$Source.IP)
+data$Source.Port <- as.numeric(data$Source.Port)
+data$Destination.IP <- as.numeric(data$Destination.IP)
+data$Destination.Port <- as.numeric(data$Destination.Port)
 data$Label <- as.numeric(data$Label)
+
+
+#Columns only have value of zero.
+data = subset(data, select = -c(Timestamp, Fwd.PSH.Flags, Bwd.PSH.Flags, Fwd.URG.Flags, Bwd.URG.Flags, CWE.Flag.Count,
+                             Fwd.Avg.Bytes.Bulk, Fwd.Avg.Packets.Bulk, Fwd.Avg.Bulk.Rate, Bwd.Avg.Bytes.Bulk,
+                             Bwd.Avg.Packets.Bulk, Bwd.Avg.Bulk.Rate, Init_Win_bytes_backward, Init_Win_bytes_forward,
+                             Active.Mean, Active.Std, Active.Max, Active.Min, Idle.Mean, Idle.Std, Idle.Max, Idle.Min))
+
+
+
+#missing values
+nrow(data[!complete.cases(data),]) / nrow(data)
+data <- data[complete.cases(data),]
+
+
+
 
 #scale data
 maxs <- apply(data[,1:16], 2, max)
