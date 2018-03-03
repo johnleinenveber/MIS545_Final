@@ -1,8 +1,6 @@
-#work in progress
 
 # start run timer
 start <- Sys.time()
-
 
 #libraries
 #install.packages('ISLR')
@@ -44,31 +42,36 @@ Fwd.Avg.Bytes.Bulk, Fwd.Avg.Packets.Bulk, Fwd.Avg.Bulk.Rate, Bwd.Avg.Bytes.Bulk,
 Bwd.Avg.Packets.Bulk, Bwd.Avg.Bulk.Rate, Init_Win_bytes_backward, Init_Win_bytes_forward,
 Active.Mean, Active.Std, Active.Max, Active.Min, Idle.Mean, Idle.Std, Idle.Max, Idle.Min))
 "
+"
 data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets, Total.Length.of.Fwd.Packets,
                                Total.Length.of.Bwd.Packets, Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
                                Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
+"
+
+data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
+                               Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
+
 
 #interested in knowing if the network traffic is normal or not.
 data$Label <- ifelse(data$Label == "BENIGN", 0, 1)
 
 #missing and negative values
-data[data == -1 ] <- NA
 nrow(data[!complete.cases(data),])
-nrow(data[complete.cases(data),])
+data[data < 0] <- NA
 data <- data[complete.cases(data),]
 
 #quickSave <- data
 #data <- quickSave
 
 #scale data
-maxs <- apply(data[,1:62], 2, max)
-mins <- apply(data[,1:62], 2, min)
-scaled_data <- as.data.frame(scale(data[,1:62], center = mins, scale = maxs - mins))
+maxs <- apply(data[,1:9], 2, max)
+mins <- apply(data[,1:9], 2, min)
+scaled_data <- as.data.frame(scale(data[,1:9], center = mins, scale = maxs - mins))
 
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
 Label <- data$Label
-data <- cbind(Label, scaled_data[,1:62])
-rm(scaled_data)
+data <- cbind(Label, scaled_data[,1:9])
+#rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
 sample_size = 1000
@@ -82,26 +85,39 @@ train <- sampledData[training_index,]
 test <- sampledData[-training_index,]
 
 #set up formula for neuralnet() function
-feats <- names(data[,2:63])
+feats <- names(data[,2:10])
 f <- paste(feats, collapse = '+')
 f <- paste('Label ~', f)
 f <- as.formula(f)
 
+#clear some space in memory
+#rm(data, scaled_data, Label, NAstrings, maxs, mins, index, feats)
 #create the neural net using training set
-nn <- neuralnet(f, train, hidden = 31, stepmax = 1e+06,linear.output = FALSE)
+nn <- neuralnet(f, train, hidden = c(5, 5), stepmax = 1e+06,linear.output = FALSE)
 
 #predict Output variable using nn with the test set
-predicted_nn <- compute(nn,test[2:63])
+predicted_nn <- compute(nn,test[2:10])
 predicted_nn$net.result <- sapply(predicted_nn$net.result, round, digits = 0)
 
 #confusion matrix
-confusionMatrix <- table(test$Label, predicted_nn$net.result)
-confusionMatrix
+table(test$Label, predicted_nn$net.result)
+
 plot(nn)
 
-fileConn <- file("output.txt")
-writeLines(table(test$Label, predicted_nn$net.result), fileConn)
-close(fileConn)
+#TPR
+TPR <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(test$Label == 0)
+TNR <- sum(test$Label == 1 & predicted_nn$net.result == 1) / sum(test$Label == 1)
+FPR <- 1 - TNR
+FNR <- 1 - TPR
+
+precision <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(predicted_nn$net.result == 0)
+recall <- TPR
+
+F <- 2 * precision * recall / (precision + recall)
+
+precision
+recall
+F
 
 #stop timer and print run time
 end <- Sys.time()
