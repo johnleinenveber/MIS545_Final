@@ -28,9 +28,9 @@ file8 <- subset(file8, select = -c(External.IP))
 data <- rbind(file1, file2, file3, file5, file6, file7, file8)
 rm(file1, file2, file3,file5, file6, file7, file8)
 
-data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets, Total.Length.of.Fwd.Packets,
-Total.Length.of.Bwd.Packets, Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
-Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
+data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets,
+            Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets,
+            Subflow.Bwd.Packets, act_data_pkt_fwd, Label))
 
 data$Protocol <- as.numeric(as.factor(data$Protocol))
 
@@ -46,13 +46,13 @@ data <- data[complete.cases(data),]
 #data <- quickSave
 
 #scale data
-maxs <- apply(data[,1:13], 2, max)
-mins <- apply(data[,1:13], 2, min)
-scaled_data <- as.data.frame(scale(data[,1:13], center = mins, scale = maxs - mins))
+maxs <- apply(data[,1:9], 2, max)
+mins <- apply(data[,1:9], 2, min)
+scaled_data <- as.data.frame(scale(data[,1:9], center = mins, scale = maxs - mins))
 
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
 Label <- data$Label
-data <- cbind(Label, scaled_data[,1:13])
+data <- cbind(Label, scaled_data[,1:9])
 #rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
@@ -67,7 +67,7 @@ train <- sampledData[training_index,]
 test <- sampledData[-training_index,]
 
 #set up formula for neuralnet() function
-feats <- names(data[,2:14])
+feats <- names(data[,2:10])
 f <- paste(feats, collapse = '+')
 f <- paste('Label ~', f)
 f <- as.formula(f)
@@ -75,10 +75,10 @@ f <- as.formula(f)
 #clear some space in memory
 #rm(data, scaled_data, Label, NAstrings, maxs, mins, index, feats)
 #create the neural net using training set
-nn <- neuralnet(f, train, hidden = c(5, 5), stepmax = 1e+06,linear.output = FALSE)
+nn <- neuralnet(f, train, hidden = c(4, 4), stepmax = 1e+06,linear.output = FALSE)
 
 #predict Output variable using nn with the test set
-predicted_nn <- compute(nn,test[2:14])
+predicted_nn <- compute(nn,test[2:10])
 predicted_nn$net.result <- sapply(predicted_nn$net.result, round, digits = 0)
 
 #confusion matrix
@@ -88,12 +88,12 @@ table(results)
 plot(nn)
 
 #TPR
-TPR <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(test$Label == 0)
-TNR <- sum(test$Label == 1 & predicted_nn$net.result == 1) / sum(test$Label == 1)
+TPR <- sum(test$Label == 1 & predicted_nn$net.result == 1) / sum(test$Label == 1)
+TNR <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(test$Label == 0)
 FPR <- 1 - TNR
 FNR <- 1 - TPR
 
-precision <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(predicted_nn$net.result == 0)
+precision <- sum(test$Label == 1 & predicted_nn$net.result == 1) / sum(predicted_nn$net.result == 1)
 recall <- TPR
 
 F <- 2 * precision * recall / (precision + recall)
