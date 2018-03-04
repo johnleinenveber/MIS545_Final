@@ -1,4 +1,3 @@
-
 # start run timer
 start <- Sys.time()
 
@@ -29,28 +28,11 @@ file8 <- subset(file8, select = -c(External.IP))
 data <- rbind(file1, file2, file3, file5, file6, file7, file8)
 rm(file1, file2, file3,file5, file6, file7, file8)
 
-data$Flow.ID <- as.numeric(data$Flow.ID)
-data$Source.IP <- as.numeric(data$Source.IP)
-data$Source.Port <- as.numeric(data$Source.Port)
-data$Destination.IP <- as.numeric(data$Destination.IP)
-data$Destination.Port <- as.numeric(data$Destination.Port)
-
-#Columns only have value of zero.
-"
-data = subset(data, select = -c(Timestamp, Fwd.PSH.Flags, Bwd.PSH.Flags, Fwd.URG.Flags, Bwd.URG.Flags, CWE.Flag.Count,
-Fwd.Avg.Bytes.Bulk, Fwd.Avg.Packets.Bulk, Fwd.Avg.Bulk.Rate, Bwd.Avg.Bytes.Bulk,
-Bwd.Avg.Packets.Bulk, Bwd.Avg.Bulk.Rate, Init_Win_bytes_backward, Init_Win_bytes_forward,
-Active.Mean, Active.Std, Active.Max, Active.Min, Idle.Mean, Idle.Std, Idle.Max, Idle.Min))
-"
-"
 data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets, Total.Length.of.Fwd.Packets,
-                               Total.Length.of.Bwd.Packets, Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
-                               Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
-"
+Total.Length.of.Bwd.Packets, Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
+Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
 
-data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
-                               Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
-
+data$Protocol <- as.numeric(as.factor(data$Protocol))
 
 #interested in knowing if the network traffic is normal or not.
 data$Label <- ifelse(data$Label == "BENIGN", 0, 1)
@@ -64,13 +46,13 @@ data <- data[complete.cases(data),]
 #data <- quickSave
 
 #scale data
-maxs <- apply(data[,1:9], 2, max)
-mins <- apply(data[,1:9], 2, min)
-scaled_data <- as.data.frame(scale(data[,1:9], center = mins, scale = maxs - mins))
+maxs <- apply(data[,1:13], 2, max)
+mins <- apply(data[,1:13], 2, min)
+scaled_data <- as.data.frame(scale(data[,1:13], center = mins, scale = maxs - mins))
 
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
 Label <- data$Label
-data <- cbind(Label, scaled_data[,1:9])
+data <- cbind(Label, scaled_data[,1:13])
 #rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
@@ -85,7 +67,7 @@ train <- sampledData[training_index,]
 test <- sampledData[-training_index,]
 
 #set up formula for neuralnet() function
-feats <- names(data[,2:10])
+feats <- names(data[,2:14])
 f <- paste(feats, collapse = '+')
 f <- paste('Label ~', f)
 f <- as.formula(f)
@@ -96,11 +78,12 @@ f <- as.formula(f)
 nn <- neuralnet(f, train, hidden = c(5, 5), stepmax = 1e+06,linear.output = FALSE)
 
 #predict Output variable using nn with the test set
-predicted_nn <- compute(nn,test[2:10])
+predicted_nn <- compute(nn,test[2:14])
 predicted_nn$net.result <- sapply(predicted_nn$net.result, round, digits = 0)
 
 #confusion matrix
-table(test$Label, predicted_nn$net.result)
+results <- data.frame(actual = test$Label, predicted = predicted_nn$net.result)
+table(results)
 
 plot(nn)
 
