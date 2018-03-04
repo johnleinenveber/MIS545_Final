@@ -21,16 +21,15 @@ file8 <- read.csv("CICIDS/8FridayC-DDoS.csv", na.strings = NAstrings)
 file8 <- subset(file8, select = -c(External.IP))
 
 data <- rbind(file1, file2, file3, file5, file6, file7, file8)
-#rm(file1, file2, file3,file5, file6, file7, file8)
+rm(file1, file2, file3,file5, file6, file7, file8)
 
 #select input variables and output variable
-data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets, Total.Length.of.Fwd.Packets,
-                               Total.Length.of.Bwd.Packets, Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets, Subflow.Fwd.Bytes,
-                               Subflow.Bwd.Packets, Subflow.Bwd.Bytes, act_data_pkt_fwd, Label))
+data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets,
+                               Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets,
+                               Subflow.Bwd.Packets, act_data_pkt_fwd, Label))
 
 #only take malicious network traffic
 data$Label <- ifelse(data$Label == "BENIGN", "BENIGN", "ATTACK")
-data$Label <- as.factor(data$Label)
 
 #missing and negative values
 nrow(data[!complete.cases(data),])
@@ -38,12 +37,12 @@ data[data < 0] <- NA
 data <- data[complete.cases(data),]
 
 data$Protocol <- as.factor(data$Protocol)
-data$Label <- as.numeric(data$Label)
+data$Label <- as.numeric(as.factor(data$Label))
 
 
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
 Protocol <- data$Protocol
-data <- cbind(Protocol, data[,2:14])
+data <- cbind(Protocol, data[,2:10])
 #rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
@@ -64,6 +63,9 @@ table(results)
 
 
 #TPR
+TPR_0 <- sum(test$Protocol == 0 & svm_predict == 0) / sum(test$Protocol == 0)
+TNR_0 <- sum(test$Protocol != 0 & svm_predict != 0) / sum(test$Protocol == 0)
+
 TPR_6 <- sum(test$Protocol == 6 & svm_predict == 6) / sum(test$Protocol == 6)
 TNR_6 <- sum(test$Protocol != 6 & svm_predict != 6) / sum(test$Protocol == 6)
 
@@ -71,10 +73,17 @@ TPR_17 <- sum(test$Protocol == 17 & svm_predict == 17) / sum(test$Protocol == 17
 TNR_17 <- sum(test$Protocol != 17 & svm_predict != 17) / sum(test$Protocol == 17)
 
 
-precision <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(predicted_nn$net.result == 0)
-recall <- TPR_6
+precision_0 <- sum(test$Protocol == 0 & svm_predict == 0) / sum(svm_predict == 0)
+precision_6 <- sum(test$Protocol == 6 & svm_predict == 6) / sum(svm_predict == 6)
+precision_17 <- sum(test$Protocol == 17 & svm_predict == 17) / sum(svm_predict == 17)
 
-F <- 2 * precision * recall / (precision + recall)
+recall_0 <- TPR_0
+recall_6 <- TPR_6
+recall_17 <- TPR_17
+
+F_0 <- 2 * precision_0 * recall_0 / (precision_0 + recall_0)
+F_6 <- 2 * precision_6 * recall_6 / (precision_6 + recall_6)
+F_17 <- 2 * precision_17 * recall_17 / (precision_17 + recall_17)
 
 precision
 recall
