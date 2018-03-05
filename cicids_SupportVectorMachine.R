@@ -1,6 +1,10 @@
 # start run timer
 start <- Sys.time()
 
+#set working directory
+#setwd("C:/Users/Owner/Documents/MIS545/FinalProject")
+setwd("Documents/MIS545/FinalProject")
+
 #install.packages("e1071")
 #install.packages("rpart")
 library(e1071)
@@ -65,34 +69,32 @@ svm_predict <- predict(svm_model, newdata = test)
 results <- data.frame(actual = test$Label, predicted = svm_predict)
 table(results)
 
-"
+
 #TPR
-TPR_0 <- sum(test$Protocol == 0 & svm_predict == 0) / sum(test$Protocol == 0)
-TNR_0 <- sum(test$Protocol != 0 & svm_predict != 0) / sum(test$Protocol == 0)
+TPR_5 <- sum(test$Label == 5 & svm_predict == 5) / sum(test$Label == 5)
+TNR_5 <- sum(test$Label != 5 & svm_predict != 5) / sum(test$Label != 5)
+FPR_5 <- 1 - TNR_5
+FNR_5 <- 1 - TPR_5
 
-TPR_6 <- sum(test$Protocol == 6 & svm_predict == 6) / sum(test$Protocol == 6)
-TNR_6 <- sum(test$Protocol != 6 & svm_predict != 6) / sum(test$Protocol == 6)
+TPR_11 <- sum(test$Label == 11 & svm_predict == 11) / sum(test$Label == 11)
+TNR_11 <- sum(test$Label != 11 & svm_predict != 11) / sum(test$Label != 11)
+FPR_11 <- 1 - TNR_11
+FNR_11 <- 1 - TPR_11
 
-TPR_17 <- sum(test$Protocol == 17 & svm_predict == 17) / sum(test$Protocol == 17)
-TNR_17 <- sum(test$Protocol != 17 & svm_predict != 17) / sum(test$Protocol == 17)
+precision_5 <- sum(test$Label == 5 & svm_predict == 5) / sum(svm_predict == 5)
+precision_11 <- sum(test$Label == 11 & svm_predict == 11) / sum(svm_predict == 11)
+
+recall_5 <- TPR_5
+recall_11 <- TPR_11
+
+F_5 <- 2 * precision_5 * recall_5 / (precision_5 + recall_5)
+F_11 <- 2 * precision_11 * recall_11 / (precision_11 + recall_11)
+
+accuracy_5 <- (TPR_5 + TNR_5) / (TPR_5 + TNR_5 + FPR_5 + FNR_5)
+accuracy_11 <- (TPR_11 + TNR_11) / (TPR_11 + TNR_11 + FPR_11 + FNR_11)
 
 
-precision_0 <- sum(test$Protocol == 0 & svm_predict == 0) / sum(svm_predict == 0)
-precision_6 <- sum(test$Protocol == 6 & svm_predict == 6) / sum(svm_predict == 6)
-precision_17 <- sum(test$Protocol == 17 & svm_predict == 17) / sum(svm_predict == 17)
 
-recall_0 <- TPR_0
-recall_6 <- TPR_6
-recall_17 <- TPR_17
-
-F_0 <- 2 * precision_0 * recall_0 / (precision_0 + recall_0)
-F_6 <- 2 * precision_6 * recall_6 / (precision_6 + recall_6)
-F_17 <- 2 * precision_17 * recall_17 / (precision_17 + recall_17)
-
-precision
-recall
-F
-"
 #stop timer and print run time
 end <- Sys.time()
 end - start
