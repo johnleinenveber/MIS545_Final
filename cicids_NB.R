@@ -33,7 +33,7 @@ data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total
 data$Label <- as.numeric(data$Label)
 
 #only select attacks
-#data <- data[data$Label == 1,]
+#data <- data[data$Protocol != 0,]
 
 #missing and negative values
 nrow(data[!complete.cases(data),])
@@ -66,6 +66,27 @@ nb_predict <- predict(nb_model, test, type = 'class')
 results <- data.frame(actual = test$Protocol, predicted = nb_predict)
 table(results)
 
+TPR_17 <- sum(test$Protocol == 17 & nb_predict == 17) / sum(test$Protocol == 17)
+TNR_17 <- sum(test$Protocol != 17 & nb_predict != 17) / sum(test$Protocol != 17)
+FPR_17 <- 1 - TNR_17
+FNR_17 <- 1 - TPR_17
+
+TPR_6 <- sum(test$Protocol == 6 & nb_predict == 6) / sum(test$Protocol == 6)
+TNR_6 <- sum(test$Protocol != 6 & nb_predict != 6) / sum(test$Protocol != 6)
+FPR_6 <- 1 - TNR_6
+FNR_6 <- 1 - TPR_6
+
+precision_17 <- sum(test$Protocol == 17 & nb_predict == 17) / sum(nb_predict == 17)
+precision_6 <- sum(test$Protocol == 6 & nb_predict == 6) / sum(nb_predict == 6)
+
+recall_6 <- TPR_6
+recall_17 <- TPR_17
+
+F_17 <- 2 * precision_17 * recall_17 / (precision_17 + recall_17)
+F_6 <- 2 * precision_6 * recall_6 / (precision_6 + recall_6)
+
+accuracy_6 <- (TPR_6 + TNR_6) / (TPR_6 + TNR_6 + FPR_6 + FNR_6)
+accuracy_17 <- (TPR_17 + TNR_17) / (TPR_17 + TNR_17 + FPR_17 + FNR_17)
 
 #stop timer and print run time
 end <- Sys.time()
