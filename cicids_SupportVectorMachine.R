@@ -29,24 +29,28 @@ data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total
                                Subflow.Bwd.Packets, act_data_pkt_fwd, Label))
 
 #only take malicious network traffic
-data$Label <- ifelse(data$Label == "BENIGN", "BENIGN", "ATTACK")
+#data$Label <- ifelse(data$Label == "BENIGN", "BENIGN", "ATTACK")
+data$Label <- as.numeric(data$Label)
+
+#only select attacks
+data <- data[data$Label != 1,]
 
 #missing and negative values
 nrow(data[!complete.cases(data),])
 data[data < 0] <- NA
 data <- data[complete.cases(data),]
 
-data$Protocol <- as.factor(data$Protocol)
-data$Label <- as.numeric(as.factor(data$Label))
-
+data$Protocol <- as.numeric(as.factor(data$Protocol))
+data$Label <- as.factor(data$Label)
 
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
-Protocol <- data$Protocol
-data <- cbind(Protocol, data[,2:10])
+#Protocol <- data$Protocol
+Label <- data$Label
+data <- cbind(Label, data[,2:9])
 #rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
-sample_size = 10000
+sample_size = 100000
 index <- sample(nrow(data), size = sample_size, replace = FALSE)
 sampledData <- data[index,]
 
@@ -56,12 +60,12 @@ training_index <- sample(nrow(sampledData), size = sample_size, replace = FALSE)
 train <- sampledData[training_index,]
 test <- sampledData[-training_index,]
 
-svm_model <- svm(Protocol ~ ., data = train)
+svm_model <- svm(Label ~ ., data = train)
 svm_predict <- predict(svm_model, newdata = test)
-results <- data.frame(actual = test$Protocol, predicted = svm_predict)
+results <- data.frame(actual = test$Label, predicted = svm_predict)
 table(results)
 
-
+"
 #TPR
 TPR_0 <- sum(test$Protocol == 0 & svm_predict == 0) / sum(test$Protocol == 0)
 TNR_0 <- sum(test$Protocol != 0 & svm_predict != 0) / sum(test$Protocol == 0)
@@ -88,15 +92,10 @@ F_17 <- 2 * precision_17 * recall_17 / (precision_17 + recall_17)
 precision
 recall
 F
-
+"
 #stop timer and print run time
 end <- Sys.time()
 end - start
-
-
-
-
-
 
 
 
