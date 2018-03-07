@@ -1,5 +1,14 @@
+
+#John Leinenveber
+#MIS545
+
+#CICIDS2017
+#Naive Bayes
+
 # start run timer
 start <- Sys.time()
+
+#set working directory
 
 #install.packages("e1071")
 #install.packages("rpart")
@@ -66,6 +75,7 @@ nb_predict <- predict(nb_model, test, type = 'class')
 results <- data.frame(actual = test$Protocol, predicted = nb_predict)
 table(results)
 
+#Performance
 TPR_17 <- sum(test$Protocol == 17 & nb_predict == 17) / sum(test$Protocol == 17)
 TNR_17 <- sum(test$Protocol != 17 & nb_predict != 17) / sum(test$Protocol != 17)
 FPR_17 <- 1 - TNR_17
