@@ -1,5 +1,14 @@
+
+#John Leinenveber
+#MIS545
+
+#CICIDS2017
+#Neural Network
+
 # start run timer
 start <- Sys.time()
+
+#set working directory
 
 #libraries
 #install.packages('ISLR')
@@ -29,8 +38,8 @@ data <- rbind(file1, file2, file3, file5, file6, file7, file8)
 rm(file1, file2, file3,file5, file6, file7, file8)
 
 data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total.Backward.Packets,
-            Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets,
-            Subflow.Bwd.Packets, act_data_pkt_fwd, Label))
+                               Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets,
+                               Subflow.Bwd.Packets, act_data_pkt_fwd, Label))
 
 data$Protocol <- as.numeric(as.factor(data$Protocol))
 
@@ -42,9 +51,6 @@ nrow(data[!complete.cases(data),])
 data[data < 0] <- NA
 data <- data[complete.cases(data),]
 
-#quickSave <- data
-#data <- quickSave
-
 #scale data
 maxs <- apply(data[,1:9], 2, max)
 mins <- apply(data[,1:9], 2, min)
@@ -53,7 +59,6 @@ scaled_data <- as.data.frame(scale(data[,1:9], center = mins, scale = maxs - min
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
 Label <- data$Label
 data <- cbind(Label, scaled_data[,1:9])
-#rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
 sample_size = 1000
@@ -73,9 +78,10 @@ f <- paste('Label ~', f)
 f <- as.formula(f)
 
 #clear some space in memory
-#rm(data, scaled_data, Label, NAstrings, maxs, mins, index, feats)
+rm(data, scaled_data, Label, NAstrings, maxs, mins, index, feats)
+
 #create the neural net using training set
-nn <- neuralnet(f, train, hidden = c(4, 4), stepmax = 1e+06,linear.output = FALSE)
+nn <- neuralnet(f, train, hidden = c(5, 5), stepmax = 1e+06,linear.output = FALSE)
 
 #predict Output variable using nn with the test set
 predicted_nn <- compute(nn,test[2:10])
@@ -87,7 +93,7 @@ table(results)
 
 plot(nn)
 
-#TPR
+#Performance
 TPR <- sum(test$Label == 1 & predicted_nn$net.result == 1) / sum(test$Label == 1)
 TNR <- sum(test$Label == 0 & predicted_nn$net.result == 0) / sum(test$Label == 0)
 FPR <- 1 - TNR
@@ -98,9 +104,7 @@ recall <- TPR
 
 F <- 2 * precision * recall / (precision + recall)
 
-precision
-recall
-F
+accuracy <- (TPR + TNR) / (TPR + TNR + FPR + FNR)
 
 #stop timer and print run time
 end <- Sys.time()
