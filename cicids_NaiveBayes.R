@@ -4,6 +4,7 @@
 
 #CICIDS2017
 #Naive Bayes
+#Predicting Protocol (TCP/UDP)
 
 # start run timer
 start <- Sys.time()
