@@ -4,6 +4,9 @@
 
 #CICIDS2017
 #SVM
+#Predicting attack type
+
+#Dataset: http://www.unb.ca/cic/datasets/ids-2017.html
 
 # start run timer
 start <- Sys.time()
