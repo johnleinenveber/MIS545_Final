@@ -1,9 +1,15 @@
+
+#John Leinenveber
+#MIS545
+
+#CICIDS2017
+#SVM
+
 # start run timer
 start <- Sys.time()
 
 #set working directory
-#setwd("C:/Users/Owner/Documents/MIS545/FinalProject")
-setwd("Documents/MIS545/FinalProject")
+setwd("MIS545/FinalProject")
 
 #install.packages("e1071")
 #install.packages("rpart")
@@ -32,8 +38,6 @@ data = subset(data, select = c(Protocol, Flow.Duration, Total.Fwd.Packets, Total
                                Bwd.Header.Length, Fwd.Header.Length, Subflow.Fwd.Packets,
                                Subflow.Bwd.Packets, act_data_pkt_fwd, Label))
 
-#only take malicious network traffic
-#data$Label <- ifelse(data$Label == "BENIGN", "BENIGN", "ATTACK")
 data$Label <- as.numeric(data$Label)
 
 #only select attacks
@@ -48,13 +52,11 @@ data$Protocol <- as.numeric(as.factor(data$Protocol))
 data$Label <- as.factor(data$Label)
 
 #set data$Label to variable Label so we can reference it when we build the formula later. cbind to front of scaled_data
-#Protocol <- data$Protocol
 Label <- data$Label
 data <- cbind(Label, data[,2:9])
-#rm(scaled_data)
 
 #Start with a smaller sample specified by sample_size
-sample_size = 100000
+sample_size = 1000
 index <- sample(nrow(data), size = sample_size, replace = FALSE)
 sampledData <- data[index,]
 
@@ -64,13 +66,13 @@ training_index <- sample(nrow(sampledData), size = sample_size, replace = FALSE)
 train <- sampledData[training_index,]
 test <- sampledData[-training_index,]
 
+rm(data)
 svm_model <- svm(Label ~ ., data = train)
 svm_predict <- predict(svm_model, newdata = test)
 results <- data.frame(actual = test$Label, predicted = svm_predict)
 table(results)
 
-
-#TPR
+#Performance
 TPR_5 <- sum(test$Label == 5 & svm_predict == 5) / sum(test$Label == 5)
 TNR_5 <- sum(test$Label != 5 & svm_predict != 5) / sum(test$Label != 5)
 FPR_5 <- 1 - TNR_5
@@ -98,6 +100,3 @@ accuracy_11 <- (TPR_11 + TNR_11) / (TPR_11 + TNR_11 + FPR_11 + FNR_11)
 #stop timer and print run time
 end <- Sys.time()
 end - start
-
-
-
